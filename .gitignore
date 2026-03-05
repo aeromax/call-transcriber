@@ -1,0 +1,35 @@
+# Swift / Xcode
+.build/
+.swiftpm/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+DerivedData/
+*.moved-aside
+*.pbxuser
+
+# Models (large binary files — downloaded by download-models.sh)
+CallTranscriber/Resources/Models/openai_whisper-*/
+CallTranscriber/Resources/Models/diarization/
+!CallTranscriber/Resources/Models/.gitkeep
+!CallTranscriber/Resources/Models/diarization/.placeholder
+
+# Distribution artifacts
+dist/
+*.dmg
+*.zip
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Recordings (user data)
+~/Documents/CallTranscriber/
+
+# Environment / secrets
+.env
+*.p8
+*.p12
+
+# Editor / tool configs
+.claude/
+.vscode/
