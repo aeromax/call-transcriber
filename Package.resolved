@@ -1,13 +1,13 @@
 {
-  "originHash" : "0fb8f992e6abf621cb5f19ddee590f17e1b3a3ba1ce211b39c29751cec9e2949",
+  "originHash" : "959fbd5c6619a09f5c93996ea7d7351c46162bf68757b738a51fbb3e4bd5404b",
   "pins" : [
     {
       "identity" : "fluidaudio",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/FluidInference/FluidAudio.git",
+      "location" : "https://github.com/aeromax/FluidAudio.git",
       "state" : {
-        "revision" : "1cf23303df75df13e8dc92a0343c40006fbbe234",
-        "version" : "0.12.1"
+        "branch" : "main",
+        "revision" : "bbb9481d28f83687dce5cfed3bbe3c988eda6301"
       }
     },
     {
