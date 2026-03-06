@@ -9,7 +9,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit.git", from: "0.9.0"),
-        .package(url: "https://github.com/FluidInference/FluidAudio.git", from: "0.1.0"),
+        .package(url: "https://github.com/aeromax/FluidAudio.git", branch: "main"),
         .package(url: "https://github.com/kishikawakatsumi/KeychainAccess.git", from: "4.2.2"),
     ],
     targets: [
