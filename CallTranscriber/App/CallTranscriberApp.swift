@@ -18,7 +18,6 @@ struct CallTranscriberApp: App {
                 .task {
                     if !hasCompletedOnboarding {
                         showOnboarding = true
-                        hasCompletedOnboarding = true
                     }
                 }
         }

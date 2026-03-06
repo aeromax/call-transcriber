@@ -3,7 +3,7 @@ import AVFoundation
 import CoreMedia
 
 /// Converts CMSampleBuffers from ScreenCaptureKit into 16kHz mono Float32 arrays.
-final class AudioMixer {
+actor AudioMixer {
     static let targetSampleRate: Double = 16000
     static let targetChannels: AVAudioChannelCount = 1
 
@@ -18,10 +18,14 @@ final class AudioMixer {
             return nil
         }
 
+        let sampleRate = asbd.pointee.mSampleRate
+        let channelCount = asbd.pointee.mChannelsPerFrame
+        guard sampleRate > 0, channelCount > 0, channelCount <= 64 else { return nil }
+
         let inputAudioFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
-            sampleRate: asbd.pointee.mSampleRate,
-            channels: asbd.pointee.mChannelsPerFrame,
+            sampleRate: sampleRate,
+            channels: channelCount,
             interleaved: false
         )
 
@@ -30,25 +34,40 @@ final class AudioMixer {
         // Rebuild converter if format changed
         if inputFormat != inputAudioFormat || converter == nil {
             inputFormat = inputAudioFormat
-            let outputFormat = AVAudioFormat(
+            guard let outputFormat = AVAudioFormat(
                 commonFormat: .pcmFormatFloat32,
                 sampleRate: AudioMixer.targetSampleRate,
                 channels: AudioMixer.targetChannels,
                 interleaved: false
-            )!
+            ) else { return nil }
             converter = AVAudioConverter(from: inputAudioFormat, to: outputFormat)
         }
 
         guard let converter else { return nil }
 
         // Wrap CMSampleBuffer into AVAudioPCMBuffer
+        // AudioBufferList is variable-length; query the required size first.
         var blockBuffer: CMBlockBuffer?
-        var audioBufferList = AudioBufferList()
+        var bufferListSizeNeeded: Int = 0
+        CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(
+            sampleBuffer,
+            bufferListSizeNeededOut: &bufferListSizeNeeded,
+            bufferListOut: nil,
+            bufferListSize: 0,
+            blockBufferAllocator: nil,
+            blockBufferMemoryAllocator: nil,
+            flags: kCMSampleBufferFlag_AudioBufferList_Assure16ByteAlignment,
+            blockBufferOut: nil
+        )
+        guard bufferListSizeNeeded > 0 else { return nil }
+        let ablData = UnsafeMutableRawPointer.allocate(byteCount: bufferListSizeNeeded, alignment: 16)
+        defer { ablData.deallocate() }
+        let audioBufferListPtr = ablData.bindMemory(to: AudioBufferList.self, capacity: 1)
         CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(
             sampleBuffer,
             bufferListSizeNeededOut: nil,
-            bufferListOut: &audioBufferList,
-            bufferListSize: MemoryLayout<AudioBufferList>.size,
+            bufferListOut: audioBufferListPtr,
+            bufferListSize: bufferListSizeNeeded,
             blockBufferAllocator: nil,
             blockBufferMemoryAllocator: nil,
             flags: kCMSampleBufferFlag_AudioBufferList_Assure16ByteAlignment,
@@ -56,13 +75,14 @@ final class AudioMixer {
         )
 
         let frameCount = AVAudioFrameCount(CMSampleBufferGetNumSamples(sampleBuffer))
+        guard frameCount > 0 else { return nil }
         guard let inputBuffer = AVAudioPCMBuffer(pcmFormat: inputAudioFormat, frameCapacity: frameCount) else {
             return nil
         }
         inputBuffer.frameLength = frameCount
 
         // Copy audio data
-        let ablPointer = UnsafeMutableAudioBufferListPointer(&audioBufferList)
+        let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferListPtr)
         for (i, buffer) in ablPointer.enumerated() {
             guard i < Int(inputAudioFormat.channelCount),
                   let dst = inputBuffer.floatChannelData?[i],
@@ -74,6 +94,7 @@ final class AudioMixer {
         let outputFrameCapacity = AVAudioFrameCount(
             ceil(Double(frameCount) * AudioMixer.targetSampleRate / inputAudioFormat.sampleRate)
         )
+        guard outputFrameCapacity > 0 else { return nil }
         guard let outputBuffer = AVAudioPCMBuffer(
             pcmFormat: converter.outputFormat,
             frameCapacity: outputFrameCapacity
@@ -96,6 +117,7 @@ final class AudioMixer {
 
         guard let channelData = outputBuffer.floatChannelData else { return nil }
         let count = Int(outputBuffer.frameLength)
+        guard count > 0 else { return nil }
         return Array(UnsafeBufferPointer(start: channelData[0], count: count))
     }
 }

@@ -64,17 +64,6 @@ final class RecordingSession: NSObject, ObservableObject {
         guard state == .idle else { return }
         state = .preparing
 
-        // Request permissions check
-        let permissions = PermissionService()
-        await permissions.checkAll()
-        guard permissions.allGranted else {
-            state = .idle
-            if permissions.microphoneStatus != .granted {
-                throw AppError.microphonePermissionDenied
-            }
-            throw AppError.screenRecordingPermissionDenied
-        }
-
         // Start file
         audioFileURL = try audioFileManager.startNewFile()
         startTime = Date()

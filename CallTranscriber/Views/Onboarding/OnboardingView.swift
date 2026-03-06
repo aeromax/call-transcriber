@@ -3,6 +3,7 @@ import SwiftUI
 struct OnboardingView: View {
     @StateObject private var permissions = PermissionService()
     @Binding var isPresented: Bool
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         VStack(spacing: 32) {
@@ -44,7 +45,7 @@ struct OnboardingView: View {
             .cornerRadius(12)
 
             // Continue button
-            Button(action: { isPresented = false }) {
+            Button(action: { hasCompletedOnboarding = true; isPresented = false }) {
                 Text("Get Started")
                     .frame(maxWidth: .infinity)
             }

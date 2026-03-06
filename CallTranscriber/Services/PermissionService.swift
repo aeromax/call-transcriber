@@ -30,12 +30,12 @@ final class PermissionService: ObservableObject {
     // MARK: - Microphone
 
     func checkMicrophone() async {
-        switch AVCaptureDevice.authorizationStatus(for: .audio) {
-        case .authorized:
+        switch AVAudioApplication.shared.recordPermission {
+        case .granted:
             microphoneStatus = .granted
-        case .denied, .restricted:
+        case .denied:
             microphoneStatus = .denied
-        case .notDetermined:
+        case .undetermined:
             microphoneStatus = .notDetermined
         @unknown default:
             microphoneStatus = .notDetermined
@@ -43,7 +43,7 @@ final class PermissionService: ObservableObject {
     }
 
     func requestMicrophone() async {
-        let granted = await AVCaptureDevice.requestAccess(for: .audio)
+        let granted = await AVAudioApplication.requestRecordPermission()
         microphoneStatus = granted ? .granted : .denied
     }
 
